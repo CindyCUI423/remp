@@ -1,17 +1,15 @@
 'use client'
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import {
-    Card,
-    CardContent,
-    CardHeader,
-    CardTitle,
-} from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import React, {useState} from "react";
-import {login} from "@/apis/auth";
+import {login} from "@/api/auth";
 import { useRouter } from "next/navigation";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {AlertCircleIcon} from "lucide-react";
+import {LoadingOverlay} from "@/components/ui/loading-overlay";
 
 
 export function LoginForm({
@@ -21,22 +19,38 @@ export function LoginForm({
 
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [errorAlert, setErrorAlert] = useState("");
+    const [isLogining, setIsLogining] = useState(false);
 
     const router = useRouter();
 
     async function onSubmit(e: React.FormEvent) {
         e.preventDefault();
-
+        setIsLogining(true);
         try {
+            // send request to backend login API to get token
             const result = await login({email, password});
-            console.log(`Login Successfully: ${result}`);
-            const token = result.data.token;
-            localStorage.setItem("token", token);
+            const token = result?.data.token;
+
+            // send request to frontend API to set token in cookie
+            await fetch("/api/session", {
+                method: "POST",
+                body: JSON.stringify({ token }),
+                headers: {
+                    "Content-Type": "application/json",
+                },
+            })
+
+            // go to home page
             router.push("/");
 
         } catch (error) {
+            const message = error instanceof Error ? error.message : "Unknown error";
+            setErrorAlert(message);
             console.log(error)
 
+        } finally {
+            setIsLogining(false);
         }
     }
 
@@ -73,8 +87,16 @@ export function LoginForm({
                                 </div>
                                 <Input id="password" type="password" placeholder="Enter your password" value={password} required onChange={e => setPassword(e.target.value)} />
                             </div>
+
+                            {errorAlert && (
+                                <Alert variant="destructive" className="bg-[#ffe4e4]">
+                                    <AlertCircleIcon />
+                                    <AlertTitle>{errorAlert}</AlertTitle>
+                                </Alert>
+                            )}
+
                             <div className="flex flex-col gap-3">
-                                <Button type="submit" className="w-full">
+                                <Button type="submit" className="w-full" disabled={isLogining}>
                                     Login
                                 </Button>
                                 {/*<Button variant="outline" className="w-full">*/}
@@ -91,6 +113,7 @@ export function LoginForm({
                     </form>
                 </CardContent>
             </Card>
+            {isLogining && <LoadingOverlay message="Logining"/>}
         </div>
     )
 }

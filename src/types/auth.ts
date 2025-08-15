@@ -16,5 +16,7 @@ export interface LoginResponse {
             agentName: string | null;
         };
         listingCaseIds: string[];
-    };
+    }
+
 }
+
