@@ -5,14 +5,18 @@ export interface LoginRequest {
 }
 
 export interface LoginResponse {
-    token: string;
-    user: {
-        id: string;
-        userName: string;
-        email: string;
-        role: string;
-        agentName: string | null;
-    };
-    listingCaseIds: string[];
+    message: string;
+    data: {
+        token: string;
+        user: {
+            id: string;
+            userName: string;
+            email: string;
+            role: string;
+            agentName: string | null;
+        };
+        listingCaseIds: string[];
+    }
+
 }
 
